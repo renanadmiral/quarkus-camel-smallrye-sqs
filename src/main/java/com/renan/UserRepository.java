@@ -4,10 +4,14 @@ import io.quarkus.hibernate.reactive.panache.PanacheRepository;
 import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
 import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.LockMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.control.ActivateRequestContext;
+import javax.persistence.LockModeType;
+import javax.transaction.Transactional;
+import java.util.List;
 
 @ApplicationScoped
 @ActivateRequestContext
@@ -32,5 +36,10 @@ public class UserRepository implements PanacheRepository<User> {
                 .withTransaction((session, transaction) -> session.persist(user))
                 .invoke(() -> log.info("Saved user {}", user.getFirstName()))
                 .replaceWithVoid();
+    }
+
+    @Transactional
+    public User query(final Long id) {
+        return findById(id, LockModeType.PESSIMISTIC_WRITE).await().indefinitely();
     }
 }
